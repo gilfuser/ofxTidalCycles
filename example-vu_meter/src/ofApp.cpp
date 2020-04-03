@@ -8,6 +8,8 @@ void ofApp::setup(){
     tidal = new ofxTidalCycles(3333, 4);
     vector<string> filepaths;
 
+    wavePhase = 0;
+    pulsePhase = 0;
 
     string path = "/home/skmecs/tidal-samples/808/bd8";
     ofDirectory dir(path);
@@ -40,13 +42,11 @@ void ofApp::setup(){
                 ofLogError()<<"error loading file, double check the file path";
             }
 //            cout << "audio file length: " << audiofile->length() << endl;
-//            cout << "audio file 0 length: " << audiofiles[0]->length() << endl;
+//            cout << "audio file 0 length: " << audiofiles[f]->length() << endl;
         } else {
             ofLogError()<<"input file does not exists";
         }
-    };
-
-    maxL = 0;
+    }
 
     // audio setup for testing audio file stream
     ofSoundStreamSettings settings;
@@ -58,20 +58,25 @@ void ofApp::setup(){
     settings.bufferSize = 512;
     ofSoundStreamSetup(settings);
 
+    playhead = std::numeric_limits<int>::max(); // because it is converted to int for check
     playheadControl = -1.0;
+    step = audiofiles[0]->samplerate() / sampleRate;
+
+    maxL = 0;
+
     for( size_t f = 0; f != audiofiles.size(); f++ ) {
         if ( audiofiles[f]->length() > maxL )
             maxL = audiofiles[f]->length();
-//        cout << "max length " << maxL << endl;
-//        cout << ofGetWidth() << endl;
+//        cout << "sample rates " << audiofiles[f]->samplerate() //        cout << ofGetWidth() << endl;
         playheads.push_back( std::numeric_limits<int>::max() ); // because it is converted to int for check
-//        steps.push_back( audiofiles[f]->samplerate() / sampleRate );
+        steps.push_back( audiofiles[f]->samplerate() / sampleRate );
+        playheadControls.push_back(playheadControl);
     }
-
 }
 
 void ofApp::update(){
     tidal->update();
+//    ofScopedLock waveformLock(waveformMutex);
 }
 
 //--------------------------------------------------------------
@@ -83,39 +88,21 @@ void ofApp::draw(){
 //    tidal->drawInstNames( margin, margin,  ofGetHeight() - margin * 2 );
 
 TODO: "make playheads independent";
-
     ofNoFill();
     ofPushMatrix();
-//    float max = ofGetWidth();
+
     for( size_t f = 0; f != audiofiles.size(); f++ ) {
-        int maxLength = ofMap( audiofiles[f]->length(), 0, maxL, 0, ofGetWidth() );
-        if( playheadControl >= 0.0 ){
-            playheads[f] = playheadControl;
-        playheadControl = -1.0;
-        }
+        uint maxLength = ofMap( audiofiles[f]->length(), 0, maxL, 0, ofGetWidth() );
 
         for( size_t chan = 0; chan < audiofiles[f]->channels(); ++chan ){
             ofBeginShape();
-            for( size_t x = 0; x < maxLength; ++x ){
+            for( uint x = 0; x < maxLength; ++x ){
                 int sampN = ofMap( x, 0, maxLength , 0, audiofiles[f]->length(), true );
                 float val = audiofiles[f]->sample( sampN, chan );
                 float y = ofMap( val, -1.0f, 1.0f, ofGetHeight() / audiofiles.size(), 0.0f );
                 ofVertex( x, y );
             }
             ofEndShape();
-
-            for (size_t i = 0; i < audiofiles[f]->length(); i++){
-
-                size_t n = playheads[f];
-
-                if( n < audiofiles[f]->length()-1 ){
-
-                    playheads[f] += steps[f];
-
-                }else{
-                    playheads[f] = std::numeric_limits<int>::max();
-                }
-            }
 
             float phx = ofMap( playheads[f], 0, audiofiles[f]->length(), 0, maxLength );
             ofDrawLine( phx, 0, phx, ofGetHeight() / audiofiles.size() );
@@ -128,8 +115,48 @@ TODO: "make playheads independent";
 
     ofDrawBitmapString ( "press SPACEBAR to play, press L to load a sample", 10,
                          ofGetHeight() - 20 );
-
 }
+
+void ofApp::audioOut(ofSoundBuffer & buffer){
+
+    // really spartan and not efficient sample playing, just for testing
+    for( size_t f = 0; f != audiofiles.size(); f++ ) {
+
+    if( playheadControls[f] >= 0.0 ){
+        playheads[f] = playheadControls[f];
+        playheadControls[f] = -1.0;
+    }
+
+    for (size_t i = 0; i < buffer.getNumFrames(); i++){
+
+        int n = playheads[f];
+
+        if( n < audiofiles[f]->length()-1 ){
+
+            for( size_t k=0; k<buffer.getNumChannels(); ++k){
+                if( k < audiofiles[f]->channels() ){
+                    float fract = playheads[f] - (double) n;
+                    float s0 = audiofiles[f]->sample( n, k );
+                    float s1 = audiofiles[f]->sample( n + 1, k );
+                    float isample = s0 * (1.0-fract) + s1 * fract; // linear interpolation
+                    buffer[ i * buffer.getNumChannels() + k] = isample;
+                }else{
+                    buffer[ i * buffer.getNumChannels() + k] = 0.0f;
+                }
+            }
+
+            playheads[f] += steps[f];
+
+        }else{
+            buffer[ i * buffer.getNumChannels() ] = 0.0f;
+            buffer[ i * buffer.getNumChannels() + 1] = 0.0f;
+            playheads[f] = std::numeric_limits<int>::max();
+        }
+
+    }
+    }
+}
+
 
 void ofxTidalCycles::drawGrid(float left, float top, float width, float height) {
     float orbCellY;
@@ -196,7 +223,12 @@ void ofxTidalCycles::drawInstNames(float left, float top, float height) {
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-    if( key == ' ') playheadControl = 0.0;
+    if( key == '0') playheadControls[0] = 0.0;
+    if( key == '1') playheadControls[1] = 0.0;
+    if( key == '2') playheadControls[2] = 0.0;
+    if( key == '3') playheadControls[3] = 0.0;
+    if( key == '4') playheadControls[4] = 0.0;
+    if( key == '5') playheadControls[5] = 0.0;
 
     if( key == 'l' || key=='L'){
        //Open the Open File Dialog
@@ -204,8 +236,8 @@ void ofApp::keyPressed(int key){
         //Check if the user opened a file
         if (openFileResult.bSuccess){
             string filepath = openFileResult.getPath();
-//            audiofiles[0].load ( filepath );
-//            step = audiofiles[0].samplerate() / sampleRate;
+//            audiofiles[f].load ( filepath );
+//            step = audiofiles[f].samplerate() / sampleRate;
             ofLogVerbose("file loaded");
         }else {
             ofLogVerbose("User hit cancel");
@@ -256,7 +288,7 @@ void ofApp::gotMessage(ofMessage msg){
 
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo){
-//    audiofiles[0].load( dragInfo.files[0] );
+//    audiofiles[f].load( dragInfo.files[f] );
 }
 
 

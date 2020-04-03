@@ -25,15 +25,30 @@ public:
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
 
+    void audioOut(ofSoundBuffer & buffer);
+
     ofxTidalCycles *tidal;
 
     ofxAudioFile *audiofile;
     vector<ofxAudioFile*> audiofiles;
     float maxL;
 
+    ofMutex waveformMutex;
+    double playhead;
     vector<double> playheads;
-    std::atomic<double> playheadControl;
+    double step;
     vector<double> steps;
+    std::atomic<double> playheadControl;
+    vector<double> playheadControls;
     double sampleRate;
+
+        double wavePhase;
+        double pulsePhase;
+
+//        std::mutex audioMutex;
+        ofSoundStream soundStream;
+        ofSoundBuffer lastBuffer;
+        ofPolyline waveform;
+        float rms;
 };
 
