@@ -1,4 +1,4 @@
-#pragma once
+//#pragma once
 
 #include "ofMain.h"
 #include "ofxTidalCycles.h"
@@ -24,12 +24,22 @@ public:
     void windowResized(int w, int h);
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
+    void drawNotes(float left, float top, float width );
+    void drawWaveforms(float x, float y, float h);
+    void drawGrid(float left, float top, float width, float height);
+    void drawOrbNumbers(float left, float top, float width );
+    void drawInstNames(float left, float top );
 
-    void audioOut(ofSoundBuffer & buffer);
+    void audioOut(ofSoundBuffer &buffer);
+//    void drawNotes (ofxTidalCycles & drawNotes);
 
-    ofxTidalCycles *tidal;
+    ofxTidalCycles* tidal;
+//    float lastTime = 0.0;
+//    int lastN = 99;
+    ulong lastCount = 0;
+    float orbCellHeight;
 
-    ofxAudioFile *audiofile;
+    ofxAudioFile* audiofile;
     vector<ofxAudioFile*> audiofiles;
     float maxL;
 
@@ -42,8 +52,8 @@ public:
     vector<double> playheadControls;
     double sampleRate;
 
-        double wavePhase;
-        double pulsePhase;
+    double wavePhase;
+    double pulsePhase;
 
 //        std::mutex audioMutex;
         ofSoundStream soundStream;

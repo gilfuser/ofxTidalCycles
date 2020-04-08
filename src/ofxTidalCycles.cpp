@@ -1,32 +1,30 @@
+#pragma once
 
 #include "ofxTidalCycles.h"
 #include "SyncopationData.h"
-#include<iostream>
-#include<bitset>
 
-ofxTidalCycles::ofxTidalCycles(int port, int _barBuffer) {
-    barBuffer = _barBuffer;
-    receiver.setup(port);
-    lastBar = 0;
-    resolution = 16;
-    events.reserve(max1);
-    soundBuffer.reserve(64);
+ofxTidalCycles::ofxTidalCycles(int port /*, uint8_t _barBuffer*/) {
+    //    barBuffer = _barBuffer;
+        receiver.setup(port);
+//    lastBar = 0;
+//    resolution = 16;
+    events.reserve(128);
+    eventBuffer.reserve(64);
 
     //init arrays
-    for (int i = 0; i < max1; i++) {
-        syncopation[i] = 0;
-        eventsNum[i] = 0;
-        bgAlpha[i] = 0;
-        for (int j = 0; j < max2; j++) {
-            eventMatrix[i][j] = 0;
-        }
-    }
+//    for (ushort i = 0; i < max1; i++) {
+//        syncopation[i] = 0;
+//        eventsNum[i] = 0;
+////        bgAlpha[i] = 0;
+//        for (ushort j = 0; j < max2; j++) {
+//            eventMatrix[i][j] = 0;
+//        }
+//    }
 }
 
 void ofxTidalCycles::update() {
     ofSetColor(255);
-    uint8_t beatCount;
-    vector<int> notes(36);
+//    uint8_t beatCount;
     while (receiver.hasWaitingMessages()) {
         ofxOscMessage m;
         receiver.getNextMessage(m);
@@ -34,25 +32,25 @@ void ofxTidalCycles::update() {
             TidalEvent event;
             event.timeStamp = ofGetElapsedTimef();
 
-            for (unsigned char i = 0; i < m.getNumArgs(); i += 2) {
-//                decltype(soundBuffer)::iterator min, max;
+            for ( uint8_t i = 0; i < m.getNumArgs(); i += 2) {
                 if (m.getArgAsString(i) == "cycle") {
-                    float cycle = m.getArgAsFloat(i + 1);
                     float bar;
-                    float fract = modff(cycle, &bar);
-                    if (events.size() == 0) {
-                        startBar = bar;
-                    }
-                    event.cycle = cycle;
+                    float fract = modff(m.getArgAsFloat(i + 1), &bar);
+//                    if (events.size() == 0) {
+//                        startBar = bar;
+//                    }
+                    event.cycle = m.getArgAsFloat(i + 1);
                     event.fract = fract;
                     event.bar = bar;
+                    /*
                     beatCount = int(fract * resolution);
                     if (event.bar > lastBar) {
                         //beatMonitor();
-                        calcStat();
-                        beatShift();
+//                        calcStat();
+//                        beatShift();
                     }
                     lastBar = int(bar);
+                    */
                 }
 
                 if (m.getArgAsString(i) == "cps")
@@ -60,10 +58,9 @@ void ofxTidalCycles::update() {
 
                 if (m.getArgAsString(i) == "n") {
                     event.n = m.getArgAsInt(i + 1);
+//                    cout << "n " << event.n << endl;
                     get<1>(event.sound) = event.n;
-
-//                    if ( !( find( notes.begin(), notes.end(), event.n ) != notes.end() ) )
-//                        notes.push_back(event.n);
+                    msgBuffer[0].push_back(event.n);
                 }
 
                 if (m.getArgAsString(i) == "orbit") {
@@ -96,8 +93,8 @@ void ofxTidalCycles::update() {
                     get<0>(event.sound) = event.s;
 
                     bool newInst = true;
-                    for (size_t i = 0; i < soundBuffer.size(); i++) {
-                        if ( event.sound == soundBuffer[i] ) {
+                    for (size_t i = 0; i < eventBuffer.size(); i++) {
+                        if ( event.sound == eventBuffer[i] ) {
                             newInst = false;
                             event.index = i;
                         }
@@ -118,23 +115,23 @@ void ofxTidalCycles::update() {
 
                     if (newInst) {
 
-                        for (auto sInOrb : orbSounds ) {
-                            cout << " ADD orb: " << sInOrb.first << endl;
-                            for (auto snSet : sInOrb.second)
-                                cout << " sound: " << snSet.first << " note: "
-                                     << snSet.second << endl;
-                            cout << " size: " << sInOrb.second.size() << " X "
-                                 << get<2>(event.orbit) << endl;
-                        }
+//                        for (auto sInOrb : orbSounds ) {
+//                            cout << " ADD orb: " << sInOrb.first << endl;
+//                            for (auto snSet : sInOrb.second)
+//                                cout << " sound: " << snSet.first << " note: "
+//                                     << snSet.second << endl;
+//                            cout << " size: " << sInOrb.second.size() << " X "
+//                                 << get<2>(event.orbit) << endl;
+//                        }
 
-                        soundBuffer.push_back(event.sound);
-                        ofSort(soundBuffer);
+                        eventBuffer.push_back(event.sound);
+                        ofSort(eventBuffer);
                     }
                 }
 
-                if (m.getArgAsString(i) == "zz" && soundBuffer.size() > 1 ) {
+                if (m.getArgAsString(i) == "zz" && eventBuffer.size() > 1 ) {
                     //erace unused inst
-                for ( auto thisSound : soundBuffer ) {
+                for ( auto thisSound : eventBuffer ) {
                     bool instExist = false;
 
                     for ( auto thisEvent : events ) {
@@ -161,13 +158,13 @@ void ofxTidalCycles::update() {
 
                         get<2>(event.orbit) = orbSounds[get<0>(event.orbit)].size();
 
-                        cout << "orb " << get<0>(event.orbit) << " size " <<
-                                get<2>(event.orbit) << " after remove" << endl;
+//                        cout << "orb " << get<0>(event.orbit) << " size " <<
+//                                get<2>(event.orbit) << " after remove" << endl;
 
-                        soundBuffer.erase(
-                                    remove( soundBuffer.begin(), soundBuffer.end(), thisSound ),
-                                    soundBuffer.end() );
-                        ofSort(soundBuffer);
+                        eventBuffer.erase(
+                                    remove( eventBuffer.begin(), eventBuffer.end(), thisSound ),
+                                    eventBuffer.end() );
+                        ofSort(eventBuffer);
 
                         if ( !( find( begin( minmax[get<0>(event.orbit)] ),end( minmax[get<0>(event.orbit)] ),
                                       event.n ) != end( minmax[get<0>(event.orbit)] ) ) )
@@ -220,7 +217,9 @@ void ofxTidalCycles::update() {
                         auto const max = *max_iter;
                         get<4>(event.orbit) = max;
                     }
+
                 }
+
             }
             events.push_back(event);
 //        cout << "orb " << get<0>(event.orbit) << " index " << get<1>(event.orbit) << " size " <<
@@ -228,16 +227,20 @@ void ofxTidalCycles::update() {
 //                get<4>(event.orbit) << endl;
 
             //add to note matrix
-            for (size_t i = 0; i < events.size(); i++) {
-                eventMatrix[event.index][beatCount + max2 - resolution] = 1;
-            }
+//            for (size_t i = 0; i < events.size(); i++) {
+//                eventMatrix[event.index][beatCount + max2 - resolution] = 1;
+//            }
 
             if (events.size() > noteMax) {
                 events.erase(events.begin());
+                counter = 0;
             }
         }
+        counter++;
     }
 }
+
+/*
 void ofxTidalCycles::beatShift() {
     for (int i = 0; i < max1; i++) {
         for (int j = resolution; j < max2; j++) {
@@ -251,12 +254,10 @@ void ofxTidalCycles::beatShift() {
 
 void ofxTidalCycles::beatMonitor() {
     cout << "-------------------------" << endl;
-    int instNumMax = soundBuffer.size();
-    /*
+    int instNumMax = eventBuffer.size();
     for ( auto event : events ) {
         eventMatrix[event.num][int(event.beatCount) + max2 - resolution] = 1;
         }
-        */
     for (int i = 0; i < instNumMax; i++) {
         cout << "part " << i << " : ";
         for (int j = 0; j < max2; j++) {
@@ -272,22 +273,20 @@ void ofxTidalCycles::calcStat() {
         syncopation[i] = 0.0;
         eventsNum[i] = 0.0;
     }
-    int instNumMax = soundBuffer.size();
+    int instNumMax = eventBuffer.size();
     for (int i = 0; i < instNumMax; i++) {
         //calculate syncopation
         string bitStr;
-        for (int j = 0; j < resolution; j++) {
+        for (uint8_t j = 0; j < resolution; j++) {
             bitStr += to_string(eventMatrix[i][max2 - resolution + j]);
         }
         int digit = stoi(bitStr, nullptr, 2);
         syncopation[i] = SG[digit];
 
-        /*
                 cout << "digit " << i << " : "
                         << bitStr << " : " << digit
                         << " syncopation : " << SG[digit]
                         << endl;
-        */
 
         //calc note count
         int num = 0;
@@ -299,4 +298,5 @@ void ofxTidalCycles::calcStat() {
         eventsNum[i] = num;
     }
 }
+        */
 
