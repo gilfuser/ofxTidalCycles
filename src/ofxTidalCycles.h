@@ -12,8 +12,10 @@ class TidalEvent {
 public:
     string s = "";
     int n = 0;
-    tuple< string, int, int > sound; // <s, n, orbit>
-    tuple<int, int, int, int, int> orbit; // <num, index, size, min, max
+    // <s, n, orbit>:
+    tuple< string, int, int > sound;
+    // <num, index, size, min, max>:
+    tuple<int, int, int, int, int> orbit;
     ushort index = 10;
 //    float length = 1.0;
     float cycle = .0f;

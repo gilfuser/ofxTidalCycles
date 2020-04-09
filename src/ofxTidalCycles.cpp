@@ -91,10 +91,10 @@ void ofxTidalCycles::update() {
                         activeOrbs.push_back( get<0>(event.orbit));
                         ofSort(activeOrbs);
                         // update orbits indexes in all events
-                        for (auto evt : events ) {
-                            if ( get<0>(evt.orbit) == get<0>(event.orbit) ) {
+                        for (auto evt : events )
+                        {
+                            if ( get<0>(evt.orbit) == get<0>(event.orbit) )
                                 get<1>(evt.orbit) = get<1>(event.orbit);
-                            }
                         }
                     }
                 }
@@ -106,8 +106,10 @@ void ofxTidalCycles::update() {
                     bool newInst = true;
                     for (size_t i = 0; i < eventBuffer.size(); i++)
                     {
-                        if ( event.sound == eventBuffer[i] ) {
+                        if ( event.sound == eventBuffer[i] )
+                        {
                             newInst = false;
+                            // TODO: "align indexes with cycles";
                             event.index = i;
                         }
                     }
@@ -120,8 +122,8 @@ void ofxTidalCycles::update() {
                         );
                     }
 
-                    // orbSounds map is used to get orbits sizes and min max
-                    orbSounds[get<0>(event.orbit)].insert( make_pair(event.s, event.n) ) ;
+                    // orbSounds map get orbits sizes and min max
+                    orbSounds[ get<0>(event.orbit) ].insert( make_pair(event.s, event.n) ) ;
                     get<2>(event.orbit) = orbSounds[get<0>(event.orbit)].size();
 
                     if (newInst)
