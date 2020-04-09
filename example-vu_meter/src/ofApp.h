@@ -56,9 +56,10 @@ public:
     double pulsePhase;
 
 //        std::mutex audioMutex;
-        ofSoundStream soundStream;
-        ofSoundBuffer lastBuffer;
-        ofPolyline waveform;
-        float rms;
+    ofSoundStream soundStream;
+    ofSoundBuffer lastBuffer;
+    ofPolyline waveform;
+    float rms;
+//    float color = ofRandom(255);
 };
 

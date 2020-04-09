@@ -76,37 +76,53 @@ void ofApp::draw(){
     drawNotes( margin, margin, ofGetWidth() - margin * 2 );
 //    tidal->drawInstNames( margin, margin,  ofGetHeight() - margin * 2 );
     drawWaveforms(0, 0, 0);
+//    tidal->drawOscMsg();
 }
 
-void ofApp::drawNotes( float left, float top, float width ){
-    if (tidal->eventBuffer.size() > 0) {
-        float h, y, w = width / 128.0;
-        for ( auto event : tidal->events ) {
-            int bar = tidal->events[tidal->events.size() - 1].bar - event.bar;
-            float x = ofMap(bar - event.fract, -1, tidal->maxBar, width + left, left);
+void ofApp::drawNotes( float left, float top, float width )
+{
+    if (tidal->eventBuffer.size() > 0)
+    {
+        float h, y;
+        for ( auto event : tidal->events )
+        {
+            auto lastEvent = tidal->events[tidal->events.size() - 1];
+            float w = width / event.cps / lastEvent.delta / tidal->maxBar;
+            int bar = lastEvent.bar - event.bar;
+            float x = ofMap(bar - event.fract, 0, tidal->maxBar, width, 0) - w + left;
 
             h = orbCellHeight / get<2>(event.orbit);
             y = ofGetHeight() - (2 * top) - ofMap(
                         event.n, get<3>(event.orbit), get<4>(event.orbit),
                         orbCellHeight * get<1>(event.orbit),
                         orbCellHeight * get<1>(event.orbit) + orbCellHeight - h) - h + top;
-            if (x > left) {
+            if (x >= left )
+            {
                 ofSetColor(255);
                 ofDrawRectangle(x, y , w, h);
                 ofDrawBitmapStringHighlight(  ofToString(event.n), x, y);
-            };
             // ofDrawBitmapStringHighlight(  ofToString(get<0>(event.orbit)), x + 30, y);
             // ofDrawBitmapStringHighlight( eventsBuffer[i], left + 5, y);
+            cout << endl << ".............................." << endl;
+            cout << "bar " << bar << endl;
+            cout << "event bar " << event.bar << endl;
+            cout << "fract " << event.fract << endl;
+            cout << "x " << x << endl;
+            cout << "delta " << get<0>(tidal->msgBuffer) << endl;
+            cout << "cps " << event.cps << endl;
+            };
         }
         if( tidal->counter != lastCount ) {
             cout << endl << "----------------------------------" << endl;
+            cout << "maxBar " << tidal->maxBar << endl;
+
             cout << "counter " << tidal->counter << endl << endl;
-            for ( ulong i = 0; i < tidal->msgBuffer[0].size(); i++ )
+            for ( ulong i = 0; i < get<1>(tidal->msgBuffer).size(); i++ )
             {
-                playheadControls[ tidal->msgBuffer[0][i] ] = 0.0;
-                cout << "buf_n " << tidal->msgBuffer[0][i] << endl;
+//                playheadControls[ tidal->msgBuffer[1][i] ] = 0.0;
+                cout << "buf_n " << get<1>(tidal->msgBuffer)[i] << endl;
             }
-            tidal->msgBuffer[0] = {};
+            get<1>(tidal->msgBuffer) = {};
             lastCount = tidal->counter;
             //    tidal->msgBuffer[0].erase(tidal->msgBuffer[0].begin());
         }

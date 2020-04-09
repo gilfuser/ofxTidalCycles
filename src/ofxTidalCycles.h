@@ -5,6 +5,9 @@
 //#include "string"
 //#include "ofxHPVPlayer.h"
 
+// max number of strings to display
+#define NUM_MSG_STRINGS 8
+
 class TidalEvent {
 public:
     string s = "";
@@ -13,13 +16,14 @@ public:
     tuple<int, int, int, int, int> orbit; // <num, index, size, min, max
     ushort index = 10;
 //    float length = 1.0;
-    float cycle = 0;
-    float cps = .0;
-    uint8_t startBar = 0;
-    uint8_t bar = 0;
-    float fract = .0;
-    float latency = .0;
-    float timeStamp = .0;
+    float cycle = .0f;
+    float cps = .0f;
+//    uint8_t startBar = 0;
+    int bar = 0;
+    float fract = .0f;
+    float latency = .0f;
+    float delta = .0f;
+//    float timeStamp = .0;
 //    ulong counter = 0;
 };
 
@@ -27,13 +31,18 @@ class ofxTidalCycles {
 public:
     ofxTidalCycles(int port/*, uint8_t barBuffer*/);
     void update();
-    void drawBg(float left, float top, float width, float height);
-    void drawGraph(float top);
-    void beatShift();
-    void beatMonitor();
-    void calcStat();
+    void drawOscMsg();
+//    void drawBg(float left, float top, float width, float height);
+//    void drawGraph(float top);
+//    void beatShift();
+//    void beatMonitor();
+//    void calcStat();
 
     ofxOscReceiver receiver;
+    ofxOscMessage m;
+    int currentMsgString;
+    string msgStrings[NUM_MSG_STRINGS];
+    float timers[NUM_MSG_STRINGS];
 
     uint counter = 0;
     vector<TidalEvent> events;
@@ -43,7 +52,8 @@ public:
 
     vector<int> activeOrbs;
 //    float startBar;
-    vector< vector<int> > msgBuffer = {{0}}; // n
+    // delta, n
+    tuple< float, vector<int> > msgBuffer;
 
     static const int maxBar = 4;
 
@@ -51,7 +61,7 @@ public:
 //    uint8_t lastBar;
 //    uint8_t barBuffer;
     static const ushort noteMax = 256; // 1024 * 8;
-    size_t startTime = ofGetElapsedTimeMillis();
+//    size_t startTime = ofGetElapsedTimeMillis();
 
     uint8_t resolution;
 //    static const ushort max1 = 256;
