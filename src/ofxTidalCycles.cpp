@@ -27,18 +27,13 @@ void ofxTidalCycles::update() {
 //    uint8_t beatCount;
     while (receiver.hasWaitingMessages())
     {
-
 //        ofxOscMessage m;
         receiver.getNextMessage(m);
-
         if (m.getAddress() == "/play2")
         {
             TidalEvent event;
-//            event.timeStamp = ofGetElapsedTimef();
-
             for ( uint8_t i = 0; i < m.getNumArgs(); i += 2)
             {
-
                 if (m.getArgAsString(i) == "cycle")
                 {
                     float bar;
@@ -60,21 +55,26 @@ void ofxTidalCycles::update() {
                     lastBar = int(bar);
                     */
                 }
-                if (m.getArgAsString(i) == "cps")
+                else if (m.getArgAsString(i) == "cps")
                     event.cps = m.getArgAsFloat(i + 1);
 
-                if (m.getArgAsString(i) == "delta")
+                else if (m.getArgAsString(i) == "delta")
                 {
                     event.delta = m.getArgAsFloat(i + 1);
                     get<0>(msgBuffer) = event.delta;
                 }
-                if (m.getArgAsString(i) == "n")
+                else if (m.getArgAsString(i) == "legato")
+                {
+                    event.haveLegato = true;
+                    event.legato = m.getArgAsInt(i + 1);
+                }
+                else if (m.getArgAsString(i) == "n")
                 {
                     event.n = m.getArgAsInt(i + 1);
                     get<1>(event.sound) = event.n;
                     get<1>(msgBuffer).push_back(event.n);
                 }
-                if (m.getArgAsString(i) == "orbit")
+                else if (m.getArgAsString(i) == "orbit")
                 {
                     get<0>(event.orbit) = m.getArgAsInt(i + 1);
                     get<2>(event.sound) = get<0>(event.orbit);
@@ -98,7 +98,7 @@ void ofxTidalCycles::update() {
                         }
                     }
                 }
-                if (m.getArgAsString(i) == "s")
+                else if (m.getArgAsString(i) == "s")
                 {
                     event.s = m.getArgAsString(i + 1);
                     get<0>(event.sound) = event.s;
@@ -142,7 +142,7 @@ void ofxTidalCycles::update() {
                         ofSort(eventBuffer);
                     }
                 }
-                if (m.getArgAsString(i) == "zz" && eventBuffer.size() > 1 )
+                else if (m.getArgAsString(i) == "zz" && eventBuffer.size() > 1 )
                 {
                     //erace unused inst
                 for ( auto thisSound : eventBuffer )
@@ -163,18 +163,10 @@ void ofxTidalCycles::update() {
                                     end( minmax[get<0>(event.orbit)] ), get<1>(thisSound) ),
                                 end( minmax[get<0>(event.orbit)] ) );
 
-//                        for (auto minmax : minmax[get<0>(event.orbit)]) {
-//                            cout << "minmax after erase orb " << get<0>(event.orbit)
-//                                 << ": " << minmax << endl;
-//                        }
-
                         orbSounds[get<2>(thisSound)].erase(
                         { get<0>(thisSound), get<1>(thisSound) } );
 
                         get<2>(event.orbit) = orbSounds[get<0>(event.orbit)].size();
-
-//                        cout << "orb " << get<0>(event.orbit) << " size " <<
-//                                get<2>(event.orbit) << " after remove" << endl;
 
                         eventBuffer.erase( remove( eventBuffer.begin(), eventBuffer.end(), thisSound ), eventBuffer.end() );
 
@@ -236,16 +228,12 @@ void ofxTidalCycles::update() {
                         get<4>(event.orbit) = max;
                     }
                 }
+                else
+                {
+                    event.haveLegato = false;
+                }
             }
             events.push_back(event);
-//        cout << "orb " << get<0>(event.orbit) << " index " << get<1>(event.orbit) << " size " <<
-//                get<2>(event.orbit) << "    min __ " << get<3>(event.orbit) << "    max ___ " <<
-//                get<4>(event.orbit) << endl;
-
-            //add to note matrix
-//            for (size_t i = 0; i < events.size(); i++) {
-//                eventMatrix[event.index][beatCount + max2 - resolution] = 1;
-//            }
             if (events.size() > noteMax)
             {
                 events.erase(events.begin());
@@ -295,19 +283,17 @@ void ofxTidalCycles::drawOscMsg(){
         }
     }
 
-    // add to the list of strings to display
-    msgStrings[currentMsgString] = msgString;
-    timers[currentMsgString] = ofGetElapsedTimef() + 5.0f;
-    currentMsgString = (currentMsgString + 1) % NUM_MSG_STRINGS;
+//    // add to the list of strings to display
+//    msgStrings[currentMsgString] = msgString;
+//    timers[currentMsgString] = ofGetElapsedTimef() + 5.0f;
+//    currentMsgString = (currentMsgString + 1) % NUM_MSG_STRINGS;
 
-    // clear the next line
-    msgStrings[currentMsgString] = "";
+//    // clear the next line
+//    msgStrings[currentMsgString] = "";
 
-    // draw recent messages
-    for(int i = 0; i < NUM_MSG_STRINGS; i++)
-    {
-        ofDrawBitmapStringHighlight(msgStrings[i], 10, 40 + 15 * i);
-    }
+//    // draw recent messages
+//    for(int i = 0; i < NUM_MSG_STRINGS; i++)
+        ofDrawBitmapStringHighlight( msgString, 10, 40 );
     ofDrawBitmapStringHighlight("listening for osc messages", 10, 20);
 
 }

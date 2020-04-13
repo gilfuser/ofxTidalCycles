@@ -6,7 +6,7 @@
 //#include "ofxHPVPlayer.h"
 
 // max number of strings to display
-#define NUM_MSG_STRINGS 8
+#define NUM_MSG_STRINGS 1
 
 class TidalEvent {
 public:
@@ -14,19 +14,21 @@ public:
     int n = 0;
     // <s, n, orbit>:
     tuple< string, int, int > sound;
-    // <num, index, size, min, max>:
+    // <num, orb-index, size, min, max>:
+
+
     tuple<int, int, int, int, int> orbit;
+
     ushort index = 10;
-//    float length = 1.0;
     float cycle = .0f;
     float cps = .0f;
-//    uint8_t startBar = 0;
     int bar = 0;
     float fract = .0f;
     float latency = .0f;
     float delta = .0f;
-//    float timeStamp = .0;
-//    ulong counter = 0;
+    bool haveLegato = false;
+    float legato = 1.0f;
+    float length = .5f;
 };
 
 class ofxTidalCycles {

@@ -2,7 +2,6 @@
 
 #include "ofMain.h"
 #include "ofxTidalCycles.h"
-
 #include "ofxAudioFile.h"
 
 class ofApp : public ofBaseApp {
@@ -11,7 +10,7 @@ public:
     void setup();
     void update();
     void draw();
-    void exit();
+//    void exit();
 
     void keyPressed(int key);
     void keyReleased(int key);
@@ -25,22 +24,21 @@ public:
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
     void drawNotes(float left, float top, float width );
-    void drawWaveforms(float x, float y, float h);
+//    void drawWaveforms(float x, float y, float w, float h);
     void drawGrid(float left, float top, float width, float height);
     void drawOrbNumbers(float left, float top, float width );
-    void drawInstNames(float left, float top );
+    void drawInstNames(float left, float top, float h );
 
-    void audioOut(ofSoundBuffer &buffer);
-//    void drawNotes (ofxTidalCycles & drawNotes);
+//    void audioOut(ofSoundBuffer &buffer);
+    void drawNotes (ofxTidalCycles & drawNotes);
 
     ofxTidalCycles* tidal;
-//    float lastTime = 0.0;
-//    int lastN = 99;
     ulong lastCount = 0;
     float orbCellHeight;
 
     ofxAudioFile* audiofile;
-    vector<ofxAudioFile*> audiofiles;
+    vector<string> sounds;
+    map< string, vector<ofxAudioFile*> > audiofiles;
     float maxL;
 
     ofMutex waveformMutex;
@@ -56,10 +54,11 @@ public:
     double pulsePhase;
 
 //        std::mutex audioMutex;
-    ofSoundStream soundStream;
-    ofSoundBuffer lastBuffer;
-    ofPolyline waveform;
+//    ofSoundStream soundStream;
+//    ofSoundBuffer lastBuffer;
+//    ofPolyline waveform;
     float rms;
-//    float color = ofRandom(255);
+
+    int start = -1;
 };
 
