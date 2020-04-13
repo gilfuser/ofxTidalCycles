@@ -1,12 +1,7 @@
 #pragma once
 #include "ofMain.h"
 #include "ofxOsc.h"
-//#include "iterator"
-//#include "string"
 //#include "ofxHPVPlayer.h"
-
-// max number of strings to display
-#define NUM_MSG_STRINGS 1
 
 class TidalEvent {
 public:
@@ -35,7 +30,7 @@ class ofxTidalCycles {
 public:
     ofxTidalCycles(int port/*, uint8_t barBuffer*/);
     void update();
-    void drawOscMsg();
+    void drawOscMsg( bool argtype );
 //    void drawBg(float left, float top, float width, float height);
 //    void drawGraph(float top);
 //    void beatShift();
@@ -45,10 +40,8 @@ public:
     ofxOscReceiver receiver;
     ofxOscMessage m;
     int currentMsgString;
-    string msgStrings[NUM_MSG_STRINGS];
-    float timers[NUM_MSG_STRINGS];
 
-    uint counter = 0;
+//    uint counter = 0;
     vector<TidalEvent> events;
     vector< tuple<string, int, int> > eventBuffer; // s, n, orbit
     map< int, set< pair<string, int> > > orbSounds; // orbit, <s, n>
@@ -57,7 +50,7 @@ public:
     vector<int> activeOrbs;
 //    float startBar;
     // delta, n
-    tuple< float, vector<int> > msgBuffer;
+//    tuple< float, vector<int> > msgBuffer;
 
     static const int maxBar = 4;
 

@@ -44,7 +44,7 @@ void ofxTidalCycles::update() {
                     event.cycle = m.getArgAsFloat(i + 1);
                     event.fract = fract;
                     event.bar = bar;
-                    counter++;
+//                    counter++;
                     /*
                     beatCount = int(fract * resolution);
                     if (event.bar > lastBar) {
@@ -61,18 +61,18 @@ void ofxTidalCycles::update() {
                 else if (m.getArgAsString(i) == "delta")
                 {
                     event.delta = m.getArgAsFloat(i + 1);
-                    get<0>(msgBuffer) = event.delta;
+//                    get<0>(msgBuffer) = event.delta;
                 }
                 else if (m.getArgAsString(i) == "legato")
                 {
                     event.haveLegato = true;
-                    event.legato = m.getArgAsInt(i + 1);
+                    event.legato = m.getArgAsFloat(i + 1);
                 }
                 else if (m.getArgAsString(i) == "n")
                 {
                     event.n = m.getArgAsInt(i + 1);
                     get<1>(event.sound) = event.n;
-                    get<1>(msgBuffer).push_back(event.n);
+//                    get<1>(msgBuffer).push_back(event.n);
                 }
                 else if (m.getArgAsString(i) == "orbit")
                 {
@@ -228,42 +228,32 @@ void ofxTidalCycles::update() {
                         get<4>(event.orbit) = max;
                     }
                 }
-                else
-                {
-                    event.haveLegato = false;
-                }
             }
             events.push_back(event);
             if (events.size() > noteMax)
             {
                 events.erase(events.begin());
-                counter = 0;
+//                counter = 0;
             }
         }
 //        counter++;
     }
 }
 
-void ofxTidalCycles::drawOscMsg(){
+void ofxTidalCycles::drawOscMsg( bool argtype = false ){
 
-    // hide old messages
-    for(int i = 0; i < NUM_MSG_STRINGS; i++)
-    {
-        if(timers[i] < ofGetElapsedTimef())
-        {
-            msgStrings[i] = "";
-        }
-    }
     string msgString;
     msgString = m.getAddress();
     msgString += ":";
     for(size_t i = 0; i < m.getNumArgs(); i++)
     {
-
         // get the argument type
         msgString += " ";
-        msgString += m.getArgTypeName(i);
-        msgString += ":";
+        if ( argtype == true )
+        {
+            msgString += m.getArgTypeName(i);
+            msgString += ":";
+        }
 
         // display the argument - make sure we get the right type
         if(m.getArgType(i) == OFXOSC_TYPE_INT32)
@@ -283,18 +273,8 @@ void ofxTidalCycles::drawOscMsg(){
         }
     }
 
-//    // add to the list of strings to display
-//    msgStrings[currentMsgString] = msgString;
-//    timers[currentMsgString] = ofGetElapsedTimef() + 5.0f;
-//    currentMsgString = (currentMsgString + 1) % NUM_MSG_STRINGS;
-
-//    // clear the next line
-//    msgStrings[currentMsgString] = "";
-
-//    // draw recent messages
-//    for(int i = 0; i < NUM_MSG_STRINGS; i++)
-        ofDrawBitmapStringHighlight( msgString, 10, 40 );
     ofDrawBitmapStringHighlight("listening for osc messages", 10, 20);
+    ofDrawBitmapStringHighlight( msgString, 10, 40 );
 
 }
 /*
