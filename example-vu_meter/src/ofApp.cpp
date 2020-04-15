@@ -113,14 +113,27 @@ void ofApp::drawNotes( float left, float top, float width ) {
         float h, y, w;
         for ( auto event : tidal->events )
         {
+            auto instrs = tidal->orbSounds[get<0>(event.orbit)];
+
+            auto sindex = ofFind( tidal->orbUniqueS[get<0>(event.orbit)], event.s );
+
+            for (auto const & x : instrs)
+            {
+                ++hist[x.first];
+            }
+
+            for (auto const & p : hist)
+            {
+//                ofLog() << "total " << instrs.size() << " " << p.first << " occurs " << " index " << sindex << " | " << p.second << " times";
+            }
+
             auto lastEvent = tidal->events[tidal->events.size() - 1];
 
             if ( audiofiles.find(event.s) == audiofiles.end() )
                 w = width * event.cps * event.delta / tidal->maxBar -1;
             else
-                w = width * event.cps * audiofiles[event.s][event.n % audiofiles[event.s].size()] ->length() / sampleRate / tidal->maxBar -1;
+                w = width * event.cps * audiofiles[event.s][event.n % audiofiles[event.s].size()]->length() / sampleRate / tidal->maxBar -1;
             if (event.haveLegato == true)
-//                cout << "sdfsdadasdasdasdadsf" << endl;
                 w = ofClamp(w, 0, width * event.cps * event.delta / tidal->maxBar * event.legato );
 
             int bar = lastEvent.bar - event.bar;
@@ -129,10 +142,14 @@ void ofApp::drawNotes( float left, float top, float width ) {
             h = orbCellHeight / get<2>(event.orbit);
 
             y = ofGetHeight() - (2 * top) - ofMap(
-                        event.n, get<3>(event.orbit),
+                        event.n,
+                        get<3>(event.orbit),
                         get<4>(event.orbit),
-                        orbCellHeight * get<1>(event.orbit),
-                        orbCellHeight * get<1>(event.orbit) + orbCellHeight - h ) - h + top;
+                        orbCellHeight * get<1>(event.orbit) + ( orbCellHeight / instrs.size() * sindex ),
+                        orbCellHeight * get<1>(event.orbit) + ( orbCellHeight / instrs.size() * ( sindex + 1 ) ) - h
+                        ) - h + top;
+
+//            y = ofMap( y, orbCellHeight * get<1>(event.orbit), orbCellHeight * get<1>(event.orbit) + ( orbCellHeight ) - h, 0, 0);
 
             if ( x >= left and x < ofGetWidth() - left )
             {
@@ -140,7 +157,6 @@ void ofApp::drawNotes( float left, float top, float width ) {
                 ofSetColor(255);
                 ofDrawRectangle(x, y , w, h);
                 ofDrawBitmapStringHighlight(  ofToString(event.n), x, y);
-//                ofDrawBitmapStringHighlight(  ofToString(get<0>(event.orbit)), x + 30, y);
 //                drawWaveforms(x, y, w, h);
 //             ofDrawBitmapStringHighlight( eventsBuffer[i], left + 5, y);
             /*
@@ -157,6 +173,7 @@ void ofApp::drawNotes( float left, float top, float width ) {
             cout << "last event index " << lastEvent.index << endl;
             */
             };
+            hist.clear();
         }
 //        if( tidal->counter != lastCount )
 //        {
@@ -205,9 +222,11 @@ void ofApp::drawOrbNumbers( float left, float top, float width ) {
 void ofApp::drawInstNames( float left, float top, float h ) {
     ofSetColor(255);
     float  y;
+//    sort(orb.begin(), orb.end());
     for ( auto event : tidal->events ) {
+        auto instrs = tidal->orbUniqueS[get<0>(event.orbit)].size();
         h = orbCellHeight / get<2>(event.orbit);
-        y = ofGetHeight() - (2 * top) - ofMap( event.n, get<3>(event.orbit), get<4>(event.orbit), orbCellHeight * get<1>(event.orbit), orbCellHeight * get<1>(event.orbit) + orbCellHeight - h ) + top;
+        y = ofGetHeight() - (2 * top) - ofMap( event.n, get<3>(event.orbit), get<4>(event.orbit), orbCellHeight * get<1>(event.orbit) / instrs, orbCellHeight * get<1>(event.orbit) + orbCellHeight - h ) + top;
         ofDrawBitmapStringHighlight( event.s, left + 5, y);
         };
 }

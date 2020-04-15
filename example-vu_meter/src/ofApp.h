@@ -39,7 +39,8 @@ public:
     ofxAudioFile* audiofile;
     vector<string> sounds;
     map< string, vector<ofxAudioFile*> > audiofiles;
-    float maxL;
+
+    map< string, int> hist;
 
     ofMutex waveformMutex;
     double playhead;
