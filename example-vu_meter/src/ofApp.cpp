@@ -90,6 +90,7 @@ void ofApp::setup(){
 //        float length = file->length() / sampleRate;
 //        cout << "sample " << ofToString(sname) /*<< ofToString(f)*/ << " length = " << length << " sec." << endl;
     }
+    startTime = ofGetElapsedTimeMillis();
 }
 
 void ofApp::update(){
@@ -108,88 +109,92 @@ void ofApp::draw(){
 }
 
 void ofApp::drawNotes( float left, float top, float width ) {
-    if (tidal->eventBuffer.size() > 0)
+    if ( tidal->cycleBuffer.size() > 0 )
     {
         float h, y, w;
-        for ( auto event : tidal->events )
+        for ( auto msg : tidal->tidalmsgs )
         {
-            auto instrs = tidal->orbSounds[get<0>(event.orbit)];
+            auto instrs = tidal->orbSounds[ msg.orbnum ];
 
-            auto sindex = ofFind( tidal->orbUniqueS[get<0>(event.orbit)], event.s );
+            auto s_index = ofFind( tidal->orbUniqueS[ msg.orbnum ], msg.s );
 
-            for (auto const & x : instrs)
-            {
-                ++hist[x.first];
-            }
+            for ( auto const & x : instrs )
+                ++hist[ x.first ];
 
-            for (auto const & p : hist)
-            {
-//                ofLog() << "total " << instrs.size() << " " << p.first << " occurs " << " index " << sindex << " | " << p.second << " times";
-            }
+            // timer = ofGetElapsedTimeMillis() - startTime;
+            // for (auto const & p : hist)
+            // {
+                // if ( timer >= 500 ) {
+                //    ofLog() << "total " << instrs.size() << " " << p.first << " occurs " << " index " << s_index << " | " << p.second << " times";
+                // }
+            // }
 
-            auto lastEvent = tidal->events[tidal->events.size() - 1];
+            auto lastmsg = tidal->tidalmsgs[ tidal->tidalmsgs.size() - 1 ];
 
-            if ( audiofiles.find(event.s) == audiofiles.end() )
-                w = width * event.cps * event.delta / tidal->maxBar -1;
+            if ( audiofiles.find(msg.s) == audiofiles.end() )
+                w = width * msg.cps * msg.delta / tidal->maxBar -1;
             else
-                w = width * event.cps * audiofiles[event.s][event.n % audiofiles[event.s].size()]->length() / sampleRate / tidal->maxBar -1;
-            if (event.haveLegato == true)
-                w = ofClamp(w, 0, width * event.cps * event.delta / tidal->maxBar * event.legato );
+                w = width * msg.cps * audiofiles[msg.s][msg.n % audiofiles[msg.s].size()]->length() / sampleRate / tidal->maxBar -1;
+            if (msg.haveLegato == true)
+                w = ofClamp(w, 0, width * msg.cps * msg.delta / tidal->maxBar * msg.legato );
 
-            int bar = lastEvent.bar - event.bar;
-            float x = ofMap(bar - event.fract, 0, tidal->maxBar, width, 0) + left;
+            int bar = lastmsg.bar - msg.bar;
+            float x = ofMap(bar - msg.fract, 0, tidal->maxBar, width, 0) + left;
 
-            h = orbCellHeight / get<2>(event.orbit);
+            h = orbCellHeight / msg.orbsize - 1;
 
-            y = ofGetHeight() - (2 * top) - ofMap(
-                        event.n,
-                        get<3>(event.orbit),
-                        get<4>(event.orbit),
-                        orbCellHeight * get<1>(event.orbit) + ( orbCellHeight / instrs.size() * sindex ),
-                        orbCellHeight * get<1>(event.orbit) + ( orbCellHeight / instrs.size() * ( sindex + 1 ) ) - h
-                        ) - h + top;
+            y = ofGetHeight() - ( 2 * top ) - ofMap(
+                msg.n,
+                msg.orb_minnum,
+                msg.orb_maxnum,
+                orbCellHeight * msg.orbindex + ( orbCellHeight / hist.size() * s_index ),
+                ( orbCellHeight * msg.orbindex + ( orbCellHeight / hist.size() * ( s_index + 1 ) ) ) - h
+            ) - h + top;
 
-//            y = ofMap( y, orbCellHeight * get<1>(event.orbit), orbCellHeight * get<1>(event.orbit) + ( orbCellHeight ) - h, 0, 0);
+//            y = ofMap( y, orbCellHeight * msg.orbindex, orbCellHeight * msg.orbindex + ( orbCellHeight ) - h, 0, 0);
 
             if ( x >= left and x < ofGetWidth() - left )
             {
                 ofFill();
-                ofSetColor(255);
-                ofDrawRectangle(x, y , w, h);
-                ofDrawBitmapStringHighlight(  ofToString(event.n), x, y);
+                ofSetColor( 255 );
+                ofDrawRectangle( x, y , w, h );
+                ofDrawBitmapStringHighlight( ofToString( msg.n ), x, y );
 //                drawWaveforms(x, y, w, h);
-//             ofDrawBitmapStringHighlight( eventsBuffer[i], left + 5, y);
+//             ofDrawBitmapStringHighlight( tidalmsgsBuffer[i], left + 5, y);
             /*
             cout << endl << ".............................." << endl;
             cout << "bar " << bar << endl;
-            cout << "event bar " << event.bar << endl;
-            cout << "fract " << event.fract << endl;
+            cout << "msg bar " << msg.bar << endl;
+            cout << "fract " << msg.fract << endl;
             cout << "x " << x << endl;
             cout << "delta " << get<0>(tidal->msgBuffer) << endl;
-            cout << "cps " << event.cps << endl;
+            cout << "cps " << msg.cps << endl;
             cout << "width " << w << endl;
             */
             /*
-            cout << "last event index " << lastEvent.index << endl;
+            cout << "last msg index " << lastmsg.index << endl;
             */
             };
             hist.clear();
+            // timer = ofGetElapsedTimeMillis() - startTime;
+            // if ( timer >= 500 ) {
+            //     ofLog() << "s_index " << s_index;
+                // startTime = ofGetElapsedTimeMillis();
+                // ofLog() << "msg.s " << ofToString( msg.s );
+                // ofLog() << "msg.n" << ofToString( msg.n );
+                // ofLog() << "msg.orbnum " + ofToString( msg.orbnum );
+                // ofLog() << "msg.orb_minnum " + ofToString( msg.orb_minnum );
+                // ofLog() << "msg.orb_maxnum " + ofToString( msg.orb_maxnum );
+                // ofLog() << "msg.orbindex " + ofToString( msg.orbindex );
+                // ofLog() << "msg.orbsize " << ofToString(msg.orbsize);
+                // cout << "----------------------------------------" << endl;
+                // cout << "orb sounds" << endl;
+                // for ( auto osound : tidal->orbSounds[ msg.orbnum ] ) {
+                //     cout << "size " << tidal->orbSounds[msg.orbnum].size() << endl;
+                //     cout << "s " << osound.first << " n " << osound.second << endl;
+                // }
+                // }
         }
-//        if( tidal->counter != lastCount )
-//        {
-////            cout << endl << "----------------------------------" << endl;
-////            cout << "maxBar " << tidal->maxBar << endl;
-
-////            cout << "counter " << tidal->counter << endl << endl;
-//            for ( ulong i = 0; i < get<1>(tidal->msgBuffer).size(); i++ )
-//            {
-//                playheadControls[ get<1>(tidal->msgBuffer)[i] ] = 0.0;
-////                cout << "buf_n " << get<1>(tidal->msgBuffer)[i] << endl;
-//            }
-//            get<1>(tidal->msgBuffer) = {};
-//            lastCount = tidal->counter;
-//            //    tidal->msgBuffer[0].erase(tidal->msgBuffer[0].begin());
-//        }
     }
 }
 
@@ -223,11 +228,11 @@ void ofApp::drawInstNames( float left, float top, float h ) {
     ofSetColor(255);
     float  y;
 //    sort(orb.begin(), orb.end());
-    for ( auto event : tidal->events ) {
-        auto instrs = tidal->orbUniqueS[get<0>(event.orbit)].size();
-        h = orbCellHeight / get<2>(event.orbit);
-        y = ofGetHeight() - (2 * top) - ofMap( event.n, get<3>(event.orbit), get<4>(event.orbit), orbCellHeight * get<1>(event.orbit) / instrs, orbCellHeight * get<1>(event.orbit) + orbCellHeight - h ) + top;
-        ofDrawBitmapStringHighlight( event.s, left + 5, y);
+    for ( auto msg : tidal->tidalmsgs ) {
+        auto instrs = tidal->orbUniqueS[msg.orbnum].size();
+        h = orbCellHeight / msg.orbsize;
+        y = ofGetHeight() - (2 * top) - ofMap( msg.n, msg.orb_minnum, msg.orb_maxnum, orbCellHeight * msg.orbindex / instrs, orbCellHeight * msg.orbindex + orbCellHeight - h ) + top;
+        ofDrawBitmapStringHighlight( msg.s, left + 5, y);
         };
 }
 

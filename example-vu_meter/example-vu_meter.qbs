@@ -15,6 +15,13 @@ Project{
             'src/main.cpp',
             'src/ofApp.cpp',
             'src/ofApp.h',
+            'src/ofApp.h.nBVtjI',
+        ]
+
+        of.addons: [
+            'ofxAudioFile',
+            'ofxTidalCycles',
+            'ofxOsc',
         ]
 
         // This project is using addons.make to include the addons

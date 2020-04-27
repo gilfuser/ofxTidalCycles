@@ -33,7 +33,7 @@ public:
     void drawNotes (ofxTidalCycles & drawNotes);
 
     ofxTidalCycles* tidal;
-    ulong lastCount = 0;
+    ulong lastCount {};
     float orbCellHeight;
 
     ofxAudioFile* audiofile;
@@ -60,6 +60,8 @@ public:
 //    ofPolyline waveform;
     float rms;
 
-    int start = -1;
+uint startTime;
+uint timer {};
+int start {-1};
 };
 
