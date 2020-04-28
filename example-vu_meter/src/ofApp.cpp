@@ -24,7 +24,7 @@ void ofApp::setup(){
             spath = spath.substr( ++spathI );
             sounds.push_back(spath);
             sdir.listDir();
-//            cout << spath <<" size: " << sdir.size() << endl;
+        //    cout << spath <<" size: " << sdir.size() << endl;
             for ( auto samps : sdir ) {
                 if ( ofFile::doesFileExist(samps.path()) )
                 {
@@ -49,14 +49,14 @@ void ofApp::setup(){
             spath = spath.substr( ++spathI );
             sounds.push_back(spath);
             tidalSamps.listDir();
-//            cout << spath << " size: " << tidalSamps.size() << endl;
+        //    cout << spath << " size: " << tidalSamps.size() << endl;
             for( auto samps : tidalSamps ) {
                 if( ofFile::doesFileExist( samps.path() ) )
                 {
                     audiofile = new ofxAudioFile;
                     audiofile->load( samps.path() );
                     audiofile->setVerbose(true);
-//                    audiofiles.insert( make_pair(spath, audiofile) );
+                //    audiofiles.insert( make_pair(spath, audiofile) );
                     audiofiles[spath].push_back(audiofile);
                     if (!audiofile->loaded())
                         ofLogError()<<"error loading file, double check the file path";
@@ -122,11 +122,14 @@ void ofApp::drawNotes( float left, float top, float width ) {
                 ++hist[ x.first ];
 
             // timer = ofGetElapsedTimeMillis() - startTime;
+                // if ( timer >= 1000 ) {
+                // counter++;
+                // cout << counter << endl;
+                // startTime = ofGetElapsedTimeMillis();
+                // }
             // for (auto const & p : hist)
             // {
-                // if ( timer >= 500 ) {
                 //    ofLog() << "total " << instrs.size() << " " << p.first << " occurs " << " index " << s_index << " | " << p.second << " times";
-                // }
             // }
 
             auto lastmsg = tidal->tidalmsgs[ tidal->tidalmsgs.size() - 1 ];
@@ -147,8 +150,9 @@ void ofApp::drawNotes( float left, float top, float width ) {
                 msg.n,
                 msg.orb_minnum,
                 msg.orb_maxnum,
-                orbCellHeight * msg.orbindex + ( orbCellHeight / hist.size() * s_index ),
-                ( orbCellHeight * msg.orbindex + ( orbCellHeight / hist.size() * ( s_index + 1 ) ) ) - h
+                orbCellHeight * msg.orbindex + orbCellHeight / hist.size() * s_index,
+                orbCellHeight * msg.orbindex + orbCellHeight / hist.size() * ( s_index + 1 ) - h
+                // orbCellHeight * msg.orbindex + orbCellHeight / instrs.size() * ( s_index +  hist[msg.s]) ) - h 
             ) - h + top;
 
 //            y = ofMap( y, orbCellHeight * msg.orbindex, orbCellHeight * msg.orbindex + ( orbCellHeight ) - h, 0, 0);
@@ -156,9 +160,12 @@ void ofApp::drawNotes( float left, float top, float width ) {
             if ( x >= left and x < ofGetWidth() - left )
             {
                 ofFill();
-                ofSetColor( 255 );
+                ofSetColor(colors[ msg.n * (msg.index + 3) % 9 ][ msg.index % 4 ][0],colors[ msg.n * (msg.index + 3) % 9 ][ msg.index % 4 ][1],colors[ msg.n * (msg.index + 3 ) % 9 ][ msg.index % 4 ][2] );
                 ofDrawRectangle( x, y , w, h );
-                ofDrawBitmapStringHighlight( ofToString( msg.n ), x, y );
+                ofDrawBitmapStringHighlight( ofToString( msg.n ), x + 4, y + 12 );
+                ofDrawBitmapStringHighlight( ofToString( msg.index ), x + 24, y + 12 );
+                ofDrawBitmapStringHighlight( ofToString( s_index ), x + 24, y + 32 );
+
 //                drawWaveforms(x, y, w, h);
 //             ofDrawBitmapStringHighlight( tidalmsgsBuffer[i], left + 5, y);
             /*
@@ -207,7 +214,8 @@ void ofApp::drawGrid( float left, float top, float width, float height ) {
     {
         orbCellHeight = height / tidal->activeOrbs.size();
         orbCellY = orbCellHeight * i;
-        ofSetColor(i * 255, 255, 255 - i * 255);
+        ofSetColor(255);
+        // ofSetColor(i * 255, 255, 255 - i * 255);
         ofDrawRectangle(left, orbCellY + top, width, orbCellHeight);
     }
     ofFill();
