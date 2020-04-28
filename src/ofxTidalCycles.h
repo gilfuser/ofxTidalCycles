@@ -27,6 +27,7 @@ public:
     bool haveLegato {false};
     float legato {1.0f};
     float length {.5f};
+    float time {};
 };
 
 class ofxTidalCycles {
@@ -49,10 +50,14 @@ public:
 
     vector<int> activeOrbs;
 
-    ushort maxBar {1};
+    ushort maxBar {2};
 
-    static const ushort noteMax {128}; // 1024 * 8;
+    static const ushort noteMax {164}; // 1024 * 8;
 
     uint8_t resolution;
+    uint startTime;
+    uint timer {};
+    ushort counter {};
+    int lastBar {};
 };
 

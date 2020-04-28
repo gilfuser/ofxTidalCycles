@@ -11,7 +11,7 @@ void ofxTidalCycles::update() {
 //    uint8_t beatCount;
     while (receiver.hasWaitingMessages())
     {
-//        ofxOscMessage m;
+    //    ofxOscMessage m;
         receiver.getNextMessage(m);
         if (m.getAddress() == "/play2")
         {
@@ -21,42 +21,35 @@ void ofxTidalCycles::update() {
                 if (m.getArgAsString(i) == "cycle")
                 {
                     float bar;
-                    float fract = modff(m.getArgAsFloat(i + 1), &bar);
-//                    }
+                    float fract = modff(m.getArgAsFloat(i + 1), & bar );
                     msg.cycle = m.getArgAsFloat(i + 1);
                     msg.fract = fract;
-                    msg.bar = bar;
+                    msg.bar =int( bar );
+                    // cout << "msg fract " << msg.fract << endl;
+                    // cout << "msg bar " << msg.bar << endl;
                 }
-                else if (m.getArgAsString(i) == "cps")
+                else if ( m.getArgAsString(i) == "cps" )
                     msg.cps = m.getArgAsFloat(i + 1);
 
-                else if (m.getArgAsString(i) == "delta")
+                else if ( m.getArgAsString(i) == "delta" )
                     msg.delta = m.getArgAsFloat(i + 1);
-                else if (m.getArgAsString(i) == "legato")
+
+                else if ( m.getArgAsString(i) == "legato" )
                 {
                     msg.haveLegato = true;
                     msg.legato = m.getArgAsFloat(i + 1);
                 }
                 else if (m.getArgAsString(i) == "n")
-                {
                     msg.n = m.getArgAsInt(i + 1);
-                    // get<1>(msg.sound) = msg.n;
-                }
+
                 else if ( m.getArgAsString(i) == "orbit" )
                 {
-                    // msg.orbnum = m.getArgAsInt(i + 1);
                     msg.orbnum = m.getArgAsInt(i + 1);
-                    // get<2>(msg.sound) = msg.orbnum;
                     // get orbit index
-                    auto match = find( activeOrbs.begin(), activeOrbs.end(), msg.orbnum );
-                    if( match != activeOrbs.end() )
+                        msg.orbindex = ofFind( activeOrbs, msg.orbnum );
+                    if ( not ofContains( activeOrbs, msg.orbnum ) )
                     {
-                        msg.orbindex = match - activeOrbs.begin();
-                        // msg.orbindex = match - activeOrbs.begin();
-                    }
-                    if ( find( activeOrbs.begin(), activeOrbs.end(),  msg.orbnum ) == activeOrbs.end() )
-                    {
-                        activeOrbs.push_back( msg.orbnum);
+                        activeOrbs.emplace_back( msg.orbnum);
                         ofSort( activeOrbs );
                         // update orbits indexes in all tidalmsgs
                         for ( auto msgs : tidalmsgs )
@@ -77,15 +70,14 @@ void ofxTidalCycles::update() {
                     bool newInst = true;
                     for (size_t i = 0; i < cycleBuffer.size(); i++)
                     {
-                        if ( msg.s == get<0>(cycleBuffer[i])
-                            and msg.n == get<1>(cycleBuffer[i])
-                            and msg.orbnum == get<2>(cycleBuffer[i]) )
+                        if ( msg.s == get<0>(cycleBuffer[i]) and msg.n == get<1>(cycleBuffer[i])
+                        and msg.orbnum == get<2>(cycleBuffer[i]) )
                         {
                             newInst = false;
                             msg.index = i;
                         }
                     }
-                    if ( find( begin( minmax[ msg.orbnum] ), end( minmax[ msg.orbnum ] ), msg.n ) == end( minmax[ msg.orbnum ] ) )
+                    if ( not ofContains( minmax[ msg.orbnum], msg.n ) )
                     {
                         transform( begin( orbSounds[msg.orbnum] ),
                             end( orbSounds[ msg.orbnum ] ),
@@ -99,59 +91,63 @@ void ofxTidalCycles::update() {
 
                     if (newInst)
                     {
-                        cycleBuffer.push_back( { msg.s, msg.n, msg.orbnum } );
+                        cycleBuffer.emplace_back( make_tuple( msg.s, msg.n, msg.orbnum ) );
                         ofSort( cycleBuffer );
-//                    if ( find( begin( orbUniqueS[msg.orbnum] ), end( orbUniqueS[msg.orbnum] ), msg.s ) == end( orbUniqueS[msg.orbnum] ) )
-                        orbUniqueS[msg.orbnum].push_back(msg.s);
+                        orbUniqueS[msg.orbnum].emplace_back(msg.s);
                     }
                 }
                 else if (m.getArgAsString(i) == "zz" && cycleBuffer.size() > 1 )
                 {
                     //erace unused inst
-                for ( auto thisSound : cycleBuffer )
-                {
-                    bool instExist = false;
-
-                    for ( auto thismsg : tidalmsgs )
+                    for ( auto thisSound : cycleBuffer )
                     {
-                        if ( thismsg.bar > tidalmsgs[tidalmsgs.size() - 1].bar - maxBar * 2)
+                        bool instExist = false;
+
+                        for ( auto thismsg : tidalmsgs )
                         {
-                            if( get<0>(thisSound) == thismsg.s
-                                and get<1>(thisSound) == thismsg.n
-                                and get<2>(thisSound) == thismsg.orbnum )
-                                instExist = true;
+                            if ( thismsg.bar > tidalmsgs[ tidalmsgs.size() - 1 ].bar - maxBar * 2 )
+                            {
+                                if
+                                ( 
+                                    get<0>(thisSound) == thismsg.s
+                                    and get<1>(thisSound) == thismsg.n
+                                    and get<2>(thisSound) == thismsg.orbnum
+                                )
+                                    instExist = true;
+                            }
                         }
-                    }
-                    if ( instExist == false )
-                    {
-                        minmax[msg.orbnum].erase(
-                                    remove( begin( minmax[msg.orbnum] ),
-                                    end( minmax[msg.orbnum] ), get<1>(thisSound) ),
-                                end( minmax[msg.orbnum] ) );
+                        if ( instExist == false )
+                        {
+                            minmax[msg.orbnum].erase(
+                                remove( begin( minmax[msg.orbnum] ),
+                                end( minmax[msg.orbnum] ), get<1>(thisSound) ),
+                            end( minmax[msg.orbnum] ) );
 
-                        orbSounds[get<2>(thisSound)].erase(
-                        { get<0>(thisSound), get<1>(thisSound) } );
+                            orbSounds[get<2>(thisSound)].erase(
+                            { get<0>(thisSound), get<1>(thisSound) } );
 
-                        msg.orbsize = orbSounds[msg.orbnum].size();
+                            msg.orbsize = orbSounds[msg.orbnum].size();
 
-                        cycleBuffer.erase( remove( cycleBuffer.begin(), cycleBuffer.end(), thisSound ), cycleBuffer.end() );
-                        ofSort(cycleBuffer);
+                            cycleBuffer.erase(
+                                remove( cycleBuffer.begin(), cycleBuffer.end(), thisSound ),
+                            cycleBuffer.end() );
+                            ofSort(cycleBuffer);
 
-                        orbUniqueS[msg.orbnum].erase(
+                            orbUniqueS[msg.orbnum].erase(
                                     remove( begin( orbUniqueS[msg.orbnum] ),
                                     end( orbUniqueS[msg.orbnum] ), get<0>(thisSound) ), end( orbUniqueS[msg.orbnum] ) );
-                        if ( find( begin( minmax[msg.orbnum] ),
+                            if ( find( begin( minmax[msg.orbnum] ),
                                       end( minmax[msg.orbnum] ),
                                       msg.n ) != end( minmax[msg.orbnum] ) )
-                        {
-                            transform( begin( orbSounds[msg.orbnum] ),
+                            {
+                                transform( begin( orbSounds[msg.orbnum] ),
                                     end( orbSounds[ msg.orbnum ] ),
                                     back_inserter( minmax[msg.orbnum] ),
                                     [](auto const& pair) { return pair.second; }
-                            );
+                                );
+                            }
                         }
                     }
-                }
                     for ( auto thisOrb : activeOrbs )
                     {
                         bool orbExist = false;
@@ -166,42 +162,39 @@ void ofxTidalCycles::update() {
                         if ( orbExist == false )
                         {
                             activeOrbs.erase(
-                                        remove(activeOrbs.begin(), activeOrbs.end(), thisOrb),
-                                        activeOrbs.end() );
+                                remove(activeOrbs.begin(), activeOrbs.end(), thisOrb),
+                                activeOrbs.end()
+                            );
+                            // ofRemove( activeOrbs, thisOrb );
                             ofSort(activeOrbs);
-                            msg.orbindex = activeOrbs.size() - 1;
 
-                            auto match = find(
-                                        activeOrbs.begin(), activeOrbs.end(),  msg.orbnum);
-                            if( match != activeOrbs.end() )
-                                msg.orbindex = match - activeOrbs.begin();
+                            msg.orbindex = ofFind( activeOrbs, msg.orbnum );
                         }
                     }
                     const auto min_iter = min_element(begin( minmax[msg.orbnum] ),
                             end( minmax[msg.orbnum] ) );
                     const auto max_iter = max_element(begin( minmax[msg.orbnum] ),
                             end( minmax[msg.orbnum] ));
-                    if ( min_iter == minmax[msg.orbnum].end())
-                    {}
+                    if ( min_iter == minmax[msg.orbnum].end()) {}
                     else
                     {
                         auto const min = *min_iter;
                         msg.orb_minnum = min;
                     }
-                    if ( max_iter == minmax[msg.orbnum].end())
-                    {}
+                    if ( max_iter == minmax[msg.orbnum].end()) {}
                     else
                     {
                         auto const max = *max_iter;
                         msg.orb_maxnum = max;
                     }
                 }
+            // timer = ofGetElapsedTimeMillis() - startTime;
             }
-            tidalmsgs.push_back(msg);
-            if (tidalmsgs.size() > noteMax)
-            {
-                tidalmsgs.erase(tidalmsgs.begin());
-            }
+                    tidalmsgs.emplace_back(msg);
+
+                    // if ( tidalmsgs.size() > cycleBuffer.size()* 4 )
+                    if ( tidalmsgs.size() >= noteMax )
+                        tidalmsgs.erase(tidalmsgs.begin());
         }
     }
 }
@@ -254,7 +247,6 @@ void ofxTidalCycles::beatShift() {
         }
     }
 }
-
 void ofxTidalCycles::beatMonitor() {
     cout << "-------------------------" << endl;
     int instNumMax = cycleBuffer.size();
@@ -302,4 +294,3 @@ void ofxTidalCycles::calcStat() {
     }
 }
         */
-
