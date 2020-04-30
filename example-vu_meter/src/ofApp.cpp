@@ -2,10 +2,10 @@
 
 //-------------------------------------------------------------
 void ofApp::setup(){
-
+    // colors.reserve(16);
     ofBackground(0);
     //args: port number, buffering bar num
-    tidal = new ofxTidalCycles(3333/*, 4*/); // port, bar buffer
+    tidal = new ofxTidalCycles(3333 ); 
     wavePhase = 0;
     pulsePhase = 0;
     string path = "/home/skmecs/tidal-samples/bpm110/";
@@ -13,16 +13,16 @@ void ofApp::setup(){
     for( auto sampNames : tidalSamps ) {
         if( sampNames.isDirectory())
         {
-            string path = sampNames.path();
+            string path {sampNames.path()};
             ofDirectory samps(path);
-            string spath = samps.path();
+            string spath {samps.path()};
             ofDirectory sdir(spath);
             sdir.allowExt("WAV");
             sdir.allowExt("wav");
             spath = spath.substr( 0, spath.size() - 1 );
-            auto spathI = spath.find_last_of('/');
+            auto spathI {spath.find_last_of('/')};
             spath = spath.substr( ++spathI );
-            sounds.push_back(spath);
+            soundnames.push_back(spath);
             sdir.listDir();
         //    cout << spath <<" size: " << sdir.size() << endl;
             for ( auto samps : sdir ) {
@@ -32,7 +32,7 @@ void ofApp::setup(){
                     audiofile->setVerbose(true);
                     audiofile->load( samps.path() );
                     audiofiles[spath].push_back(audiofile);
-                    if (!audiofile->loaded())
+                    if ( !audiofile->loaded() )
                         ofLogError()<<"error loading file, double check the file path";
                 }
                 else
@@ -47,7 +47,7 @@ void ofApp::setup(){
             spath = spath.substr( 0, spath.size() - 1 );
             auto spathI = spath.find_last_of('/');
             spath = spath.substr( ++spathI );
-            sounds.push_back(spath);
+            soundnames.push_back(spath);
             tidalSamps.listDir();
         //    cout << spath << " size: " << tidalSamps.size() << endl;
             for( auto samps : tidalSamps ) {
@@ -81,20 +81,28 @@ void ofApp::setup(){
     playheadControl = -1.0;
     for (const auto & [name, sdir] : audiofiles) {
         playheads.push_back( std::numeric_limits<int>::max() );
-//        cout << aufile->first << " length " << aufile->second->length() << endl;
-        for (size_t sind = 0; sind < sdir.size(); sind++) {
-//            cout << name << " " << sind << endl;
+       cout << name << " ---------------- " << endl;
+        for ( auto sind : sdir  ) {
+        //    cout << sind->path << endl;
             playheadControls.push_back(playheadControl);
-        steps.push_back(  sdir[sind]->samplerate() / sampleRate );
+        steps.push_back(  sind->samplerate() / sampleRate );
         }
 //        float length = file->length() / sampleRate;
 //        cout << "sample " << ofToString(sname) /*<< ofToString(f)*/ << " length = " << length << " sec." << endl;
     }
-    startTime = ofGetElapsedTimeMillis();
+    //     maxL = 0;
+    // for( size_t f = 0; f != audiofiles.size(); f++ ) {
+    //     if ( audiofiles[f]->length() > maxL )
+    //         maxL = audiofiles[f]->length();
+    //     playheads.push_back( std::numeric_limits<int>::max() );
+    //     steps.push_back( audiofiles[f]->samplerate() / sampleRate );
+    //     playheadControls.push_back(playheadControl);
+    // }
+    // startTime = ofGetElapsedTimeMillis();
 }
 
 void ofApp::update(){
-//    cout << "counter " << tidal->counter << endl;
+    // cout << "counter " << tidal->counter << endl;
     tidal->update();
 }
 
@@ -105,6 +113,7 @@ void ofApp::draw(){
     drawGrid( margin, margin, ofGetWidth() - margin * 2, ofGetHeight() - margin * 2 );
     drawNotes( margin, margin, ofGetWidth() - margin * 2 );
     drawInstNames( margin, margin,  ofGetHeight() - margin * 2 );
+    // drawWaveforms(0, 0, 0);
     tidal->drawOscMsg( false );
 }
 
@@ -160,27 +169,30 @@ void ofApp::drawNotes( float left, float top, float width ) {
             if ( x >= left and x < ofGetWidth() - left )
             {
                 ofFill();
-                ofSetColor(colors[ msg.n * (msg.index + 3) % 9 ][ msg.index % 4 ][0],colors[ msg.n * (msg.index + 3) % 9 ][ msg.index % 4 ][1],colors[ msg.n * (msg.index + 3 ) % 9 ][ msg.index % 4 ][2] );
+                ofSetColor(
+                    colors[ msg.n * (msg.index + 3) % 9 ][ msg.index % 4 ][0],
+                    colors[ msg.n * (msg.index + 3) % 9 ][ msg.index % 4 ][1],
+                    colors[ msg.n * (msg.index + 3 ) % 9 ][ msg.index % 4 ][2] 
+                );
                 ofDrawRectangle( x, y , w, h );
                 ofDrawBitmapStringHighlight( ofToString( msg.n ), x + 4, y + 12 );
                 ofDrawBitmapStringHighlight( ofToString( msg.index ), x + 24, y + 12 );
                 ofDrawBitmapStringHighlight( ofToString( s_index ), x + 24, y + 32 );
 
-//                drawWaveforms(x, y, w, h);
+               drawWaveforms( msg.s, msg.n, x, y, w, h );
 //             ofDrawBitmapStringHighlight( tidalmsgsBuffer[i], left + 5, y);
-            /*
-            cout << endl << ".............................." << endl;
-            cout << "bar " << bar << endl;
-            cout << "msg bar " << msg.bar << endl;
-            cout << "fract " << msg.fract << endl;
-            cout << "x " << x << endl;
-            cout << "delta " << get<0>(tidal->msgBuffer) << endl;
-            cout << "cps " << msg.cps << endl;
-            cout << "width " << w << endl;
-            */
+            // cout << endl << ".............................." << endl;
+            // cout << "bar " << bar << endl;
+            // cout << "msg bar " << msg.bar << endl;
+            // cout << "fract " << msg.fract << endl;
+            // cout << "x " << x << endl;
+            // cout << "delta " << get<0>(tidal->msgBuffer) << endl;
+            // cout << "cps " << msg.cps << endl;
+            // cout << "width " << w << endl;
             /*
             cout << "last msg index " << lastmsg.index << endl;
             */
+
             };
             hist.clear();
             // timer = ofGetElapsedTimeMillis() - startTime;
@@ -244,78 +256,78 @@ void ofApp::drawInstNames( float left, float top, float h ) {
         };
 }
 
-//void ofApp::drawWaveforms(float xis, float ypslon, float w, float h){
-//    ofNoFill();
-//    ofPushMatrix();
-//    for ( auto aufile = audiofiles.begin(); aufile != audiofiles.end(); ++ aufile )
+void ofApp::drawWaveforms( string s, int n, float xis, float ypslon, float w, float h) {
+   ofNoFill();
+   ofPushMatrix();
+//    for ( auto aufiles_map = audiofiles.begin(); aufiles_map != audiofiles.end(); ++aufiles_map )
 //    {
-//        uint maxLength = ofMap( aufile->second->length(), 0, maxL, 0, w );
+//     //    cout << aufiles_map->first << endl;
+//     for ( auto aufile : aufiles_map->second )
+//     {
+    // TODO! IF audiofiles[s][n] exist, then:
+       for( auto chan = 0; chan < audiofiles[s][n]->channels(); ++chan )
+       {
+           ofBeginShape();
+           for( uint x = 0; x < w; ++x )
+           {
+               int sampN = ofMap( x, 0, w , 0, audiofiles[s][n]->length(), true );
+               float val = audiofiles[s][n]->sample( sampN, chan );
+               float y = ofMap( val, -1.0f, 1.0f, h, 0.0f );
+               ofVertex( x, y );
+           }
+           ofEndShape();
 
-//        for( size_t chan = 0; chan < aufile->second->channels(); ++chan )
-//        {
-//            ofBeginShape();
-//            for( uint x = 0; x < maxLength; ++x )
-//            {
-//                int sampN = ofMap( x, 0, maxLength , 0, aufile->second->length(), true );
-//                float val = aufile->second->sample( sampN, chan );
-//                float y = ofMap( val, -1.0f, 1.0f, ofGetHeight() / audiofiles.size(), 0.0f );
-//                ofVertex( x, y );
-//            }
-//            ofEndShape();
+           ofSetColor(255, 0, 0);
 
-////            float phx = ofMap( playheads[f], 0, audiofiles[f]->length(), 0, maxLength );
-//            ofSetColor(255, 0, 0);
-////            ofDrawLine( phx, 0, phx, ofGetHeight() / audiofiles.size() );
-
-//            ofTranslate( xis, ypslon /* / audiofiles[f]->channels() */ );
-//        }
-////        ofDrawBitmapString( audiofiles[f]->path(), 10, 0 );
+           ofTranslate( xis, ypslon /* / audiofiles[f]->channels() */ );
+       }
+//     }
 //    }
-//    ofPopMatrix();
-//    ofDrawBitmapString ( "press SPACEBAR to play, press L to load a sample", 10,
-//                         ofGetHeight() - 20 );
-//};
+   ofPopMatrix();
+   ofDrawBitmapString ( "press SPACEBAR to play, press L to load a sample", 10, ofGetHeight() - 20 );
+};
 
-//void ofApp::audioOut(ofSoundBuffer &buffer)
-//{
-//    for( auto aufile = audiofiles.begin(); aufile != audiofiles.end(); ++ aufile )
-//    {
-//        if( playheadControls[f] >= 0.0 )
-//        {
-//            playheads[f] = playheadControls[f];
-//            playheadControls[f] = -1.0;
-//        }
-
-//        for (size_t i = 0; i < buffer.getNumFrames(); i++)
-//        {
-//            uint n = playheads[f];
-//            if( n < audiofiles[f]->length() - 1 )
-//            {
-//                for( size_t k=0; k<buffer.getNumChannels(); ++k)
-//                {
-//                    if( k < audiofiles[f]->channels() )
-//                    {
-//                        float fract = playheads[f] - (double) n;
-//                        float s0 = audiofiles[f]->sample( n, k );
-//                        float s1 = audiofiles[f]->sample( n + 1, k );
-//                        float isample = s0 * (1.0-fract) + s1 * fract; // linear interpolation
-//                        buffer[ i * buffer.getNumChannels() + k] = isample;
-//                    }
-//                    else
-//                        buffer[ i * buffer.getNumChannels() + k] = 0.0f;
-//                }
-
-//                playheads[f] += steps[f];
-//            }
-//            else
-//            {
-//                buffer[ i * buffer.getNumChannels() ] = 0.0f;
-//                buffer[ i * buffer.getNumChannels() + 1] = 0.0f;
-//                playheads[f] = std::numeric_limits<int>::max();
-//            }
-//        }
-//    }
-//}
+void ofApp::audioOut( ofSoundBuffer &buffer )
+{
+    for( auto aufiles_map = audiofiles.begin(); aufiles_map != audiofiles.end(); ++ aufiles_map )
+    {
+        for ( auto f = 0; f != aufiles_map->second.size(); f++ )
+        {
+            if( playheadControl >= 0.0 )
+            {
+                playhead = playheadControl;
+                playheadControl= -1.0;
+            }
+            for (size_t i = 0; i < buffer.getNumFrames(); i++)
+            {
+                int n = playhead;
+                if( n < aufiles_map->second[f]->length() - 1 )
+                {
+                    for( size_t k=0; k<buffer.getNumChannels(); ++k)
+                    {
+                        if( k < aufiles_map->second[f]->channels() )
+                        {
+                            float fract = playhead - (double) n;
+                            float s0 = aufiles_map->second[f]->sample( n, k );
+                            float s1 = aufiles_map->second[f]->sample( n + 1, k );
+                            float isample = s0 * (1.0-fract) + s1 * fract; // linear interpolation
+                            buffer[ i * buffer.getNumChannels() + k] = isample;
+                        }
+                        else
+                            buffer[ i * buffer.getNumChannels() + k] = 0.0f;
+                    }
+                    playhead += step;
+                }
+                else
+                {
+                    buffer[ i * buffer.getNumChannels() ] = 0.0f;
+                    buffer[ i * buffer.getNumChannels() + 1] = 0.0f;
+                    playhead = numeric_limits<int>::max();
+                }
+            }
+        }
+    }
+}
 
 
 ////--------------------------------------------------------------

@@ -23,13 +23,15 @@ public:
     void windowResized(int w, int h);
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
+
     void drawNotes(float left, float top, float width );
-//    void drawWaveforms(float x, float y, float w, float h);
+
     void drawGrid(float left, float top, float width, float height);
     void drawOrbNumbers(float left, float top, float width );
     void drawInstNames(float left, float top, float h );
 
-//    void audioOut(ofSoundBuffer &buffer);
+   void drawWaveforms( string s, int n, float x, float y, float w, float h);
+   void audioOut(ofSoundBuffer &buffer);
     void drawNotes (ofxTidalCycles & drawNotes);
 
     ofxTidalCycles* tidal;
@@ -37,8 +39,9 @@ public:
     float orbCellHeight;
 
     ofxAudioFile* audiofile;
-    vector<string> sounds;
+    vector<string> soundnames;
     map< string, vector<ofxAudioFile*> > audiofiles;
+    // float maxL {};
 
     map< string, int> hist;
 
@@ -54,6 +57,10 @@ public:
     double wavePhase;
     double pulsePhase;
 
+    float rms;
+    int start {-1};
+
+    // vector< tuple<ofVec3f, ofVec3f, ofVec3f, ofVec3f>> colors {
     const int colors[9][4][3] {
         { {110, 87, 115}, {212, 93, 121}, {234, 144, 133}, {233, 226, 208} },
         { {238, 249, 191}, {167, 233, 175}, {117, 183, 158}, {106, 140, 175} },
@@ -66,11 +73,10 @@ public:
         { {133, 163, 146}, {245, 185, 113}, {253, 217, 152}, {255, 236, 199} }
     };
 
-//        std::mutex audioMutex;
-//    ofSoundStream soundStream;
-//    ofSoundBuffer lastBuffer;
-//    ofPolyline waveform;
-    float rms;
+       std::mutex audioMutex;
+   ofSoundStream soundStream;
+   ofSoundBuffer lastBuffer;
+   ofPolyline waveform;
 
 uint startTime;
 uint timer {};

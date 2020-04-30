@@ -143,7 +143,6 @@ Desktop.ini
 *.make
 *.pbxproj
 *.xcscheme
-example-simple/Makefile
 *.plist
 *.xcconfig
 *.db-shm
@@ -153,3 +152,6 @@ example-simple/Makefile
 *.WAV
 .vscode/
 *.code-workspace
+ofApp.h.*
+*.qbs
+Makefile
