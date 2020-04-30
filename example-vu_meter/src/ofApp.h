@@ -44,6 +44,7 @@ public:
     // float maxL {};
 
     map< string, int> hist;
+    // map <string, int> instrNum;
 
     ofMutex waveformMutex;
     double playhead;

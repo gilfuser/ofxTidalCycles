@@ -81,24 +81,13 @@ void ofApp::setup(){
     playheadControl = -1.0;
     for (const auto & [name, sdir] : audiofiles) {
         playheads.push_back( std::numeric_limits<int>::max() );
-       cout << name << " ---------------- " << endl;
+    //    cout << name << " ---------------- " << endl;
         for ( auto sind : sdir  ) {
         //    cout << sind->path << endl;
             playheadControls.push_back(playheadControl);
         steps.push_back(  sind->samplerate() / sampleRate );
         }
-//        float length = file->length() / sampleRate;
-//        cout << "sample " << ofToString(sname) /*<< ofToString(f)*/ << " length = " << length << " sec." << endl;
     }
-    //     maxL = 0;
-    // for( size_t f = 0; f != audiofiles.size(); f++ ) {
-    //     if ( audiofiles[f]->length() > maxL )
-    //         maxL = audiofiles[f]->length();
-    //     playheads.push_back( std::numeric_limits<int>::max() );
-    //     steps.push_back( audiofiles[f]->samplerate() / sampleRate );
-    //     playheadControls.push_back(playheadControl);
-    // }
-    // startTime = ofGetElapsedTimeMillis();
 }
 
 void ofApp::update(){
@@ -112,7 +101,7 @@ void ofApp::draw(){
     float margin = ofGetWidth() / 16.0;
     drawGrid( margin, margin, ofGetWidth() - margin * 2, ofGetHeight() - margin * 2 );
     drawNotes( margin, margin, ofGetWidth() - margin * 2 );
-    drawInstNames( margin, margin,  ofGetHeight() - margin * 2 );
+    // drawInstNames( margin, margin,  ofGetHeight() - margin * 2 );
     // drawWaveforms(0, 0, 0);
     tidal->drawOscMsg( false );
 }
@@ -130,30 +119,29 @@ void ofApp::drawNotes( float left, float top, float width ) {
             for ( auto const & x : instrs )
                 ++hist[ x.first ];
 
-            // timer = ofGetElapsedTimeMillis() - startTime;
-                // if ( timer >= 1000 ) {
-                // counter++;
-                // cout << counter << endl;
-                // startTime = ofGetElapsedTimeMillis();
-                // }
-            // for (auto const & p : hist)
-            // {
-                //    ofLog() << "total " << instrs.size() << " " << p.first << " occurs " << " index " << s_index << " | " << p.second << " times";
-            // }
+            // for (auto & p : hist) {
+            //     instrNum[p.first] = p.second;
+            //     // instrCount.second = p.second;
+            //     ofLog() << "total " << instrs.size() << " " << p.first << " occurs " << " index " << s_index << " | " << p.second << " times";
+            //     }
 
             auto lastmsg = tidal->tidalmsgs[ tidal->tidalmsgs.size() - 1 ];
 
-            if ( audiofiles.find(msg.s) == audiofiles.end() )
-                w = width * msg.cps * msg.delta / tidal->maxBar -1;
-            else
+            // if ( audiofiles.find(msg.s) == audiofiles.end() )
+            if ( ofContains( audiofiles[msg.s], audiofiles[msg.s][msg.n] ) )
                 w = width * msg.cps * audiofiles[msg.s][msg.n % audiofiles[msg.s].size()]->length() / sampleRate / tidal->maxBar -1;
+            else
+                w = width * msg.cps * msg.delta / tidal->maxBar -1;
+
             if (msg.haveLegato == true)
                 w = ofClamp(w, 0, width * msg.cps * msg.delta / tidal->maxBar * msg.legato );
 
             int bar = lastmsg.bar - msg.bar;
             float x = ofMap(bar - msg.fract, 0, tidal->maxBar, width, 0) + left;
 
-            h = orbCellHeight / msg.orbsize - 1;
+            // h = orbCellHeight / instrs.size();
+            // h = orbCellHeight / instrNum[msg.s] / instrNum.size(); 
+            h = orbCellHeight / msg.orbsize -1;
 
             y = ofGetHeight() - ( 2 * top ) - ofMap(
                 msg.n,
@@ -172,14 +160,17 @@ void ofApp::drawNotes( float left, float top, float width ) {
                 ofSetColor(
                     colors[ msg.n * (msg.index + 3) % 9 ][ msg.index % 4 ][0],
                     colors[ msg.n * (msg.index + 3) % 9 ][ msg.index % 4 ][1],
-                    colors[ msg.n * (msg.index + 3 ) % 9 ][ msg.index % 4 ][2] 
+                    colors[ msg.n * (msg.index + 3 ) % 9 ][ msg.index % 4 ][2],
+                    255 / (1 + msg.bar ) 
                 );
                 ofDrawRectangle( x, y , w, h );
-                ofDrawBitmapStringHighlight( ofToString( msg.n ), x + 4, y + 12 );
-                ofDrawBitmapStringHighlight( ofToString( msg.index ), x + 24, y + 12 );
-                ofDrawBitmapStringHighlight( ofToString( s_index ), x + 24, y + 32 );
-
+                ofDrawBitmapStringHighlight(  "n " + ofToString( msg.n ), x + 4, y + 12 );
+                ofDrawBitmapStringHighlight( "buf i " + ofToString( msg.index ), x + 36, y + 12 );
+                ofDrawBitmapStringHighlight(msg.s, x + 24, y + 36 );
+                // ofPushMatrix();
                drawWaveforms( msg.s, msg.n, x, y, w, h );
+                // ofTranslate( x, y );
+                // ofPopMatrix();
 //             ofDrawBitmapStringHighlight( tidalmsgsBuffer[i], left + 5, y);
             // cout << endl << ".............................." << endl;
             // cout << "bar " << bar << endl;
@@ -217,81 +208,34 @@ void ofApp::drawNotes( float left, float top, float width ) {
     }
 }
 
-void ofApp::drawGrid( float left, float top, float width, float height ) {
-    float orbCellY;
-    ofNoFill();
-    ofSetColor(127);
-    ofDrawRectangle(left, top, width, height);
-    for (size_t i = 0; i < tidal->activeOrbs.size(); i++)
-    {
-        orbCellHeight = height / tidal->activeOrbs.size();
-        orbCellY = orbCellHeight * i;
-        ofSetColor(255);
-        // ofSetColor(i * 255, 255, 255 - i * 255);
-        ofDrawRectangle(left, orbCellY + top, width, orbCellHeight);
-    }
-    ofFill();
-}
-
-void ofApp::drawOrbNumbers( float left, float top, float width ) {
-    ofSetColor(255);
-    for ( size_t i = 0; i < tidal->activeOrbs.size(); i++) {
-        float y = ofGetHeight() - (2 * top) - ( orbCellHeight * i ) + top + 13 - orbCellHeight;
-        ofDrawBitmapStringHighlight(
-                    ofToString( tidal->activeOrbs[i] ),
-                    width + left - 10, y
-                    );
-    }
-}
-
-void ofApp::drawInstNames( float left, float top, float h ) {
-    ofSetColor(255);
-    float  y;
-//    sort(orb.begin(), orb.end());
-    for ( auto msg : tidal->tidalmsgs ) {
-        auto instrs = tidal->orbUniqueS[msg.orbnum].size();
-        h = orbCellHeight / msg.orbsize;
-        y = ofGetHeight() - (2 * top) - ofMap( msg.n, msg.orb_minnum, msg.orb_maxnum, orbCellHeight * msg.orbindex / instrs, orbCellHeight * msg.orbindex + orbCellHeight - h ) + top;
-        ofDrawBitmapStringHighlight( msg.s, left + 5, y);
-        };
-}
-
 void ofApp::drawWaveforms( string s, int n, float xis, float ypslon, float w, float h) {
-   ofNoFill();
-   ofPushMatrix();
-//    for ( auto aufiles_map = audiofiles.begin(); aufiles_map != audiofiles.end(); ++aufiles_map )
-//    {
-//     //    cout << aufiles_map->first << endl;
-//     for ( auto aufile : aufiles_map->second )
-//     {
-    // TODO! IF audiofiles[s][n] exist, then:
-       for( auto chan = 0; chan < audiofiles[s][n]->channels(); ++chan )
-       {
-           ofBeginShape();
-           for( uint x = 0; x < w; ++x )
-           {
-               int sampN = ofMap( x, 0, w , 0, audiofiles[s][n]->length(), true );
-               float val = audiofiles[s][n]->sample( sampN, chan );
-               float y = ofMap( val, -1.0f, 1.0f, h, 0.0f );
-               ofVertex( x, y );
-           }
-           ofEndShape();
-
-           ofSetColor(255, 0, 0);
-
-           ofTranslate( xis, ypslon /* / audiofiles[f]->channels() */ );
-       }
-//     }
-//    }
-   ofPopMatrix();
-   ofDrawBitmapString ( "press SPACEBAR to play, press L to load a sample", 10, ofGetHeight() - 20 );
+    if ( ofContains( audiofiles[s], audiofiles[s][n] ) )
+    {
+        ofNoFill();
+        ofSetColor(255, 0, 0);
+        ofPushMatrix();
+        for( auto chan = 0; chan < audiofiles[s][n]->channels(); ++chan )
+        {
+            ofBeginShape();
+            for( uint x = 0; x < w; ++x )
+                {
+                    int sampN = ofMap( x, 0, w , 0, audiofiles[s][n]->length(), true );
+                    float val = audiofiles[s][n]->sample( sampN, chan );
+                    float y = ofMap( val, -0.750f, 0.750f, h, 0.0f );
+                    ofVertex( x + xis, y + ypslon );
+                }
+            ofEndShape();
+        }
+        ofPopMatrix();
+        ofDrawBitmapString ( "press SPACEBAR to play, press L to load a sample", 10, ofGetHeight() - 20 );
+    }
 };
 
 void ofApp::audioOut( ofSoundBuffer &buffer )
 {
     for( auto aufiles_map = audiofiles.begin(); aufiles_map != audiofiles.end(); ++ aufiles_map )
     {
-        for ( auto f = 0; f != aufiles_map->second.size(); f++ )
+        for ( auto f = 0; f < aufiles_map->second.size(); f++ )
         {
             if( playheadControl >= 0.0 )
             {
@@ -326,6 +270,45 @@ void ofApp::audioOut( ofSoundBuffer &buffer )
                 }
             }
         }
+    }
+}
+
+void ofApp::drawInstNames( float left, float top, float h ) {
+    ofSetColor(255);
+    float  y;
+//    sort(orb.begin(), orb.end());
+    for ( auto msg : tidal->tidalmsgs ) {
+        auto instrs = tidal->orbUniqueS[msg.orbnum].size();
+        h = orbCellHeight / msg.orbsize;
+        y = ofGetHeight() - (2 * top) - ofMap( msg.n, msg.orb_minnum, msg.orb_maxnum, orbCellHeight * msg.orbindex / instrs, orbCellHeight * msg.orbindex + orbCellHeight - h ) + top;
+        ofDrawBitmapStringHighlight( msg.s, left + 5, y);
+        };
+}
+
+void ofApp::drawGrid( float left, float top, float width, float height ) {
+    float orbCellY;
+    ofNoFill();
+    ofSetColor(127);
+    ofDrawRectangle(left, top, width, height);
+    for (size_t i = 0; i < tidal->activeOrbs.size(); i++)
+    {
+        orbCellHeight = height / tidal->activeOrbs.size();
+        orbCellY = orbCellHeight * i;
+        ofSetColor(255);
+        // ofSetColor(i * 255, 255, 255 - i * 255);
+        ofDrawRectangle(left, orbCellY + top, width, orbCellHeight);
+    }
+    ofFill();
+}
+
+void ofApp::drawOrbNumbers( float left, float top, float width ) {
+    ofSetColor(255);
+    for ( size_t i = 0; i < tidal->activeOrbs.size(); i++) {
+        float y = ofGetHeight() - (2 * top) - ( orbCellHeight * i ) + top + 13 - orbCellHeight;
+        ofDrawBitmapStringHighlight(
+                    ofToString( tidal->activeOrbs[i] ),
+                    width + left - 10, y
+                    );
     }
 }
 
@@ -400,3 +383,11 @@ void ofApp::dragEvent(ofDragInfo dragInfo){
 //void ofApp::exit(){
 //    ofSoundStreamClose();
 //}
+
+
+            // timer = ofGetElapsedTimeMillis() - startTime;
+                // if ( timer >= 1000 ) {
+                // counter++;
+                // cout << counter << endl;
+                // startTime = ofGetElapsedTimeMillis();
+                // }

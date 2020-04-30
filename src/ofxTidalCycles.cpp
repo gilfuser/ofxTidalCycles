@@ -24,7 +24,7 @@ void ofxTidalCycles::update() {
                     float fract = modff(m.getArgAsFloat(i + 1), & bar );
                     msg.cycle = m.getArgAsFloat(i + 1);
                     msg.fract = fract;
-                    msg.bar =int( bar );
+                    msg.bar =int( bar ); // % 4;
                     // cout << "msg fract " << msg.fract << endl;
                     // cout << "msg bar " << msg.bar << endl;
                 }
@@ -105,7 +105,7 @@ void ofxTidalCycles::update() {
 
                         for ( auto thismsg : tidalmsgs )
                         {
-                            if ( thismsg.bar > tidalmsgs[ tidalmsgs.size() - 1 ].bar - maxBar * 2 )
+                            if ( thismsg.bar > tidalmsgs[ tidalmsgs.size() - 1 ].bar /* - maxBar * 2*/ )
                             {
                                 if
                                 ( 

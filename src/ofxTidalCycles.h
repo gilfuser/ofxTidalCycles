@@ -50,9 +50,9 @@ public:
 
     vector<int> activeOrbs;
 
-    ushort maxBar {2};
+    const ushort maxBar {4};
 
-    static const ushort noteMax {164}; // 1024 * 8;
+    static const ushort noteMax {64}; // 1024 * 8;
 
     uint8_t resolution;
     uint startTime;
