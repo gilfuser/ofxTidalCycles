@@ -22,7 +22,7 @@ void ofApp::setup(){
             spath = spath.substr( 0, spath.size() - 1 );
             auto spathI {spath.find_last_of('/')};
             spath = spath.substr( ++spathI );
-            soundnames.push_back(spath);
+            soundnames.emplace_back(spath);
             sdir.listDir();
         //    cout << spath <<" size: " << sdir.size() << endl;
             for ( auto samps : sdir ) {
@@ -31,7 +31,7 @@ void ofApp::setup(){
                     audiofile = new ofxAudioFile;
                     audiofile->setVerbose(true);
                     audiofile->load( samps.path() );
-                    audiofiles[spath].push_back(audiofile);
+                    audiofiles[spath].emplace_back(audiofile);
                     if ( !audiofile->loaded() )
                         ofLogError()<<"error loading file, double check the file path";
                 }
@@ -47,7 +47,7 @@ void ofApp::setup(){
             spath = spath.substr( 0, spath.size() - 1 );
             auto spathI = spath.find_last_of('/');
             spath = spath.substr( ++spathI );
-            soundnames.push_back(spath);
+            soundnames.emplace_back(spath);
             tidalSamps.listDir();
         //    cout << spath << " size: " << tidalSamps.size() << endl;
             for( auto samps : tidalSamps ) {
@@ -57,7 +57,7 @@ void ofApp::setup(){
                     audiofile->load( samps.path() );
                     audiofile->setVerbose(true);
                 //    audiofiles.insert( make_pair(spath, audiofile) );
-                    audiofiles[spath].push_back(audiofile);
+                    audiofiles[spath].emplace_back(audiofile);
                     if (!audiofile->loaded())
                         ofLogError()<<"error loading file, double check the file path";
                 }
@@ -80,12 +80,12 @@ void ofApp::setup(){
 
     playheadControl = -1.0;
     for (const auto & [name, sdir] : audiofiles) {
-        playheads.push_back( std::numeric_limits<int>::max() );
+        playheads.emplace_back( std::numeric_limits<int>::max() );
     //    cout << name << " ---------------- " << endl;
         for ( auto sind : sdir  ) {
         //    cout << sind->path << endl;
-            playheadControls.push_back(playheadControl);
-        steps.push_back(  sind->samplerate() / sampleRate );
+            playheadControls.emplace_back(playheadControl);
+        steps.emplace_back(  sind->samplerate() / sampleRate );
         }
     }
 }
@@ -161,7 +161,8 @@ void ofApp::drawNotes( float left, float top, float width ) {
                     colors[ msg.n * (msg.index + 3) % 9 ][ msg.index % 4 ][0],
                     colors[ msg.n * (msg.index + 3) % 9 ][ msg.index % 4 ][1],
                     colors[ msg.n * (msg.index + 3 ) % 9 ][ msg.index % 4 ][2],
-                    255 / (1 + msg.bar ) 
+                    127
+                    // 255 / (1 + (msg.bar % 4) ) 
                 );
                 ofDrawRectangle( x, y , w, h );
                 ofDrawBitmapStringHighlight(  "n " + ofToString( msg.n ), x + 4, y + 12 );
